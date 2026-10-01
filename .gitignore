@@ -1,0 +1,6 @@
+/target/
+/data/
+/.vscode/
+*.mv.db
+*.trace.db
+*.log

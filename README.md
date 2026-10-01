@@ -1,14 +1,14 @@
-# API REST de Imobiliária
+# API de Gestão Imobiliária
 
-Projeto acadêmico do Lab 01 de Desenvolvimento Web II / IFMA. A aplicação oferece uma API REST para clientes, imóveis e locações, além de um painel web integrado para administrar esses registros.
+Projeto acadêmico do Lab 01 de Desenvolvimento Web II do IFMA. A aplicação permite cadastrar e administrar clientes, imóveis e contratos de locação por uma API REST. Também inclui o painel web **Morada**, integrado à API.
 
 ## Tecnologias
 
-- Java 17+
+- Java 17 ou superior
 - Spring Boot 3.5.6
 - Spring Web e Spring Data JPA
 - Jakarta Bean Validation
-- Flyway para versionar o schema do banco
+- Flyway para controlar as alterações no banco de dados
 - H2 em modo arquivo
 - HTML, CSS e JavaScript no painel web
 
@@ -26,39 +26,40 @@ mvn -version
 
 ## Executar
 
-Na pasta raiz do projeto:
+Abra um terminal na pasta do projeto e execute:
 
 ```bash
 mvn spring-boot:run
 ```
 
-A aplicação inicia em <http://localhost:8080>. A página inicial abre o painel Morada; os endpoints REST permanecem disponíveis na mesma origem.
+Quando a inicialização terminar, acesse o painel em <http://localhost:8080>. A API usa o mesmo endereço. Por exemplo, a lista de clientes fica em <http://localhost:8080/clientes>.
 
-Para compilar e executar os testes:
+Para compilar o projeto e executar os testes automatizados:
 
 ```bash
 mvn test
 ```
 
-O projeto ainda não contém testes automatizados próprios; esse comando valida a compilação e executa os testes presentes, se houver.
+Atualmente, o projeto não tem testes próprios em `src/test/java`; o comando compila a aplicação e executa os testes presentes, se houver.
 
 ## Estrutura do projeto
 
 ```text
-src/main/java/br/edu/ifma/imobiliaria/
-├── ImobiliariaApiApplication.java  # inicialização do Spring Boot
-├── controller/                     # rotas HTTP e códigos de resposta
-├── exception/                      # formato e tratamento global de erros
-├── model/                          # entidades JPA e validações
-├── repository/                     # acesso ao banco com Spring Data
-└── service/                        # operações de consulta e CRUD
-src/main/resources/
-├── application.properties          # configuração da aplicação e do H2
-├── db/migration/                   # migrations Flyway
-└── static/                         # painel web servido pelo Spring Boot
+src/main/
+├── java/br/edu/ifma/imobiliaria/
+│   ├── ImobiliariaApiApplication.java
+│   ├── controller/                 # rotas HTTP e respostas
+│   ├── exception/                  # tratamento e formato dos erros
+│   ├── model/                      # entidades JPA e validações
+│   ├── repository/                 # acesso aos dados
+│   └── service/                    # operações de consulta e alteração
+└── resources/
+	├── application.properties      # configuração da aplicação e do H2
+	├── db/migration/               # migrações do Flyway
+	└── static/                     # painel web servido pelo Spring Boot
 ```
 
-As requisições seguem o fluxo controller → service → repository → banco. Os controllers definem as rotas e respostas HTTP; os services delegam as operações aos repositories; estes usam Spring Data JPA para persistir as entidades. Os modelos também são usados como corpo JSON da API.
+Uma requisição passa pelo controller, pelo service e pelo repository até chegar ao banco. Os controllers recebem as requisições e definem as respostas HTTP; os services coordenam as operações; os repositories usam Spring Data JPA para acessar os dados. Os modelos também são usados nos corpos JSON da API.
 
 ### Papel das classes
 
@@ -72,21 +73,21 @@ As requisições seguem o fluxo controller → service → repository → banco.
 | `GlobalExceptionHandler` | Intercepta erros de validação e `RuntimeException` em toda a API e os converte em respostas HTTP. |
 | `ApiError` | Estrutura JSON padronizada para respostas de erro. |
 
-`application.properties` define o nome da aplicação, a conexão com H2, a validação do schema por Hibernate, a execução do Flyway, a exibição de SQL e o console web do H2. A migration `V1__create_tables.sql` define as três tabelas, colunas e chaves estrangeiras.
+`application.properties` configura a conexão com o H2, a validação do banco pelo Hibernate, o Flyway, a exibição dos comandos SQL e o console do H2. A migração `V1__create_tables.sql` cria as tabelas e os relacionamentos do banco.
 
 ## Banco de dados
 
-O H2 persiste os dados em `./data/imobiliaria`, relativo à pasta em que o comando Maven é executado. A primeira inicialização executa `V1__create_tables.sql`, que cria as tabelas `clientes`, `imoveis` e `locacao`, seus IDs gerados e as chaves estrangeiras da locação.
+O H2 salva os dados em `./data/imobiliaria`, relativo à pasta de onde o comando de execução foi iniciado. Na primeira inicialização, o Flyway aplica `V1__create_tables.sql`, que cria as tabelas `clientes`, `imoveis` e `locacao` e as chaves estrangeiras da locação.
 
-O Hibernate está configurado com `ddl-auto=validate`: o schema é criado pelas migrations Flyway e, na inicialização, o Hibernate confere se as entidades correspondem a ele. O console H2 fica disponível em <http://localhost:8080/h2-console>, com estes dados:
+O Hibernate está configurado com `ddl-auto=validate`: ele confere se as entidades correspondem às tabelas, mas não cria nem altera o banco. A estrutura é criada pelas migrações do Flyway. O console do H2 fica em <http://localhost:8080/h2-console>; conecte-se com estes dados:
 
 | Campo | Valor |
 |---|---|
 | JDBC URL | `jdbc:h2:file:./data/imobiliaria` |
 | Usuário | `sa` |
-| Senha | em branco |
+| Senha | Deixe em branco |
 
-O arquivo do banco não é versionado; o `.gitignore` exclui `data/` e `target/`.
+Os dados locais e os arquivos gerados pelo Maven não são enviados ao GitHub: `data/` e `target/` estão no `.gitignore`.
 
 ## Entidades e regras
 
@@ -94,41 +95,39 @@ O arquivo do banco não é versionado; o `.gitignore` exclui `data/` e `target/`
 
 | Campo | Regra |
 |---|---|
-| `id` | Gerado pelo banco. |
-| `nomeCliente` | Obrigatório, não pode ser branco e aceita até 255 caracteres. |
-| `cpf` | Obrigatório, não pode ser branco, aceita até 14 caracteres e é único. Não há validação do formato ou dos dígitos do CPF. |
-| `telefone` | Obrigatório, não pode ser branco e aceita até 32 caracteres. |
-| `email` | Obrigatório, não pode ser branco, deve ter formato de e-mail e aceita até 100 caracteres. |
-| `dtNascimento` | Opcional; se informado, deve ser anterior à data atual. |
+| `id` | Identificador gerado pelo banco. |
+| `nomeCliente` | Obrigatório, não pode conter apenas espaços e aceita até 255 caracteres. |
+| `cpf` | Obrigatório, não pode conter apenas espaços, aceita até 14 caracteres e não pode se repetir. O código não confere o formato nem os dígitos do CPF. |
+| `telefone` | Obrigatório, não pode conter apenas espaços e aceita até 32 caracteres. |
+| `email` | Obrigatório, deve ter formato de e-mail e aceita até 100 caracteres. |
+| `dtNascimento` | Opcional; quando informado, deve ser uma data anterior à atual. |
 
 ### Imóvel
 
 | Campo | Regra |
 |---|---|
-| `id` | Gerado pelo banco. |
-| `tipoImovel` | Obrigatório e não pode ser branco. |
-| `endereco` | Obrigatório e não pode ser branco. |
-| `cep` | Obrigatório e não pode ser branco. |
-| `dormitorios`, `banheiros`, `suites`, `metragem` | Opcionais; quando informados, devem ser zero ou positivos. |
-| `valorAluguelSug` | Opcional; quando informado, deve ser zero ou positivo. |
+| `id` | Identificador gerado pelo banco. |
+| `tipoImovel`, `endereco`, `cep` | Obrigatórios e não podem conter apenas espaços. |
+| `dormitorios`, `banheiros`, `suites`, `metragem` | Opcionais; quando informados, devem ser maiores ou iguais a zero. |
+| `valorAluguelSug` | Opcional; quando informado, deve ser maior ou igual a zero. |
 | `obs` | Observações opcionais. |
 
 ### Locação
 
 | Campo | Regra |
 |---|---|
-| `id` | Gerado pelo banco. |
-| `imovel` | Obrigatório; referência ao imóvel por meio de um objeto com `id`. |
-| `inquilino` | Obrigatório; referência ao cliente por meio de um objeto com `id`. |
-| `ativo` | Indica se o contrato está ativo. O painel marca essa opção por padrão ao criar. |
-| `dataInicio` | Data de início; a coluna do banco não aceita `NULL`. |
-| `dataFim` | Data de encerramento opcional. |
-| `diaVencimento` | Dia de vencimento opcional. |
-| `percentualTaxa` | Taxa de administração opcional. |
-| `valorAluguel` | Valor mensal opcional. |
+| `id` | Identificador gerado pelo banco. |
+| `imovel` | Obrigatório; aponta para um imóvel existente. |
+| `inquilino` | Obrigatório; aponta para um cliente existente. |
+| `ativo` | Indica se a locação está ativa. O painel marca essa opção ao abrir um novo cadastro. |
+| `dataInicio` | Data de início obrigatória no banco. Preencha esse campo ao criar uma locação. |
+| `dataFim` | Data de término opcional. |
+| `diaVencimento` | Dia do vencimento, opcional. |
+| `percentualTaxa` | Percentual da taxa, opcional. |
+| `valorAluguel` | Valor mensal, opcional. |
 | `obs` | Observações opcionais. |
 
-Datas são enviadas no formato ISO `AAAA-MM-DD`; valores monetários e percentuais são números JSON. A validação Java de `Locacao` exige os relacionamentos, mas não anota `dataInicio` com `@NotNull`, apesar de a coluna SQL ser obrigatória. Preencha esse campo para evitar erro de persistência.
+As datas usam o formato `AAAA-MM-DD`. Valores monetários e percentuais são números JSON. Os campos `imovel` e `inquilino` são enviados como objetos com o ID do registro relacionado. Embora o banco exija `dataInicio`, o modelo Java não tem uma validação `@NotNull` nesse campo; deixar a data vazia pode causar um erro ao salvar.
 
 ## API REST
 
@@ -215,28 +214,27 @@ curl -X DELETE http://localhost:8080/locacoes/1
 
 ## Erros e validação
 
-`GlobalExceptionHandler` trata erros de Bean Validation e retorna um objeto `ApiError` com `timestamp`, `status`, `error`, `message` e `details`. Para campos inválidos, a resposta é `400 Bad Request`, com a mensagem `Dados inválidos.` e uma lista de detalhes no formato `campo: mensagem`.
+`GlobalExceptionHandler` trata erros de validação e retorna um objeto `ApiError` com `timestamp`, `status`, `error`, `message` e `details`. Para campos inválidos, a resposta é `400 Bad Request`, com a mensagem `Dados inválidos.` e uma lista de detalhes no formato `campo: mensagem`.
 
-O handler atual também converte qualquer `RuntimeException` em `404 Not Found`. Os services lançam esse tipo de exceção quando não encontram um registro; entretanto, outras falhas de runtime ou de integridade do banco também podem acabar apresentadas como `404`. Esse é o comportamento implementado atualmente.
+O tratamento atual também responde com `404 Not Found` para qualquer `RuntimeException`. Os services lançam essa exceção quando não encontram um registro; outras falhas durante a execução ou relacionadas à integridade do banco também podem acabar apresentadas como `404`.
 
 ## Painel web
 
-O painel **Morada** está em `src/main/resources/static` e é servido pelo próprio Spring Boot:
+O painel **Morada** está em `src/main/resources/static` e é servido pelo Spring Boot:
 
 - `index.html`: estrutura da página, navegação, indicadores, tabelas e diálogo de formulários.
 - `styles.css`: identidade visual responsiva, estados de foco, animações e adaptação para telas menores.
 - `app.js`: chamadas HTTP, renderização de dados, busca, filtros, formulários de CRUD e notificações.
 
-O painel possui as telas de visão geral, imóveis, locações e clientes. A visão geral resume os totais cadastrados, contratos ativos, soma mensal dos aluguéis ativos e ocupação dos imóveis, além de mostrar até três locações recentes. As listas permitem busca e filtros por tipo de imóvel ou estado da locação. Os formulários criam e editam registros; a exclusão pede confirmação. Na locação, os menus de seleção usam clientes e imóveis já cadastrados.
+O painel tem telas de visão geral, imóveis, locações e clientes. A visão geral mostra os totais cadastrados, as locações ativas, a soma mensal dos aluguéis ativos e a ocupação dos imóveis. Também exibe até três locações recentes. Nas listas, é possível pesquisar e filtrar por tipo de imóvel ou situação da locação. Os formulários criam e editam registros; a exclusão pede confirmação. Para cadastrar uma locação, selecione um cliente e um imóvel já cadastrados.
 
-Os dados são carregados dos três endpoints. O indicador de conexão muda para indisponível se uma das consultas falhar; o botão de atualizar repete o carregamento. O atalho `Ctrl+K` leva à busca. Fontes, ícones e fotografia do painel são obtidos de Google Fonts, unpkg/Lucide e Unsplash, respectivamente; sem conexão externa, os recursos visuais desses serviços podem não carregar.
+Os dados são carregados dos três recursos da API. O indicador mostra quando a API está indisponível se uma das consultas falhar; o botão de atualização carrega os dados novamente. O atalho `Ctrl+K` leva à busca. As fontes, os ícones e a fotografia vêm do Google Fonts, do unpkg/Lucide e do Unsplash. Esses elementos visuais dependem de conexão com a internet; as funções da API são servidas localmente pelo Spring Boot.
 
 ## Licença
 
-Este repositório não declara uma licença de uso. Consulte o responsável pelo projeto antes de redistribuir ou reutilizar o código.
+Este repositório não declara uma licença de uso. Consulte a pessoa responsável pelo projeto antes de redistribuir ou reutilizar o código.
 
-GET    /locacoes
-GET    /locacoes/{id}
-POST   /locacoes
-PUT    /locacoes/{id}
-DELETE /locacoes/{id}
+## Repositório
+
+Código-fonte: <https://github.com/Gaeleite/AtividadeAPIimbiliaria>
+

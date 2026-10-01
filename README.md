@@ -238,3 +238,5 @@ Este repositório não declara uma licença de uso. Consulte a pessoa responsáv
 
 Código-fonte: <https://github.com/Gaeleite/AtividadeAPIimbiliaria>
 
+Este projeto faz parte do Lab 01 de Desenvolvimento Web II do IFMA.
+

@@ -77,7 +77,7 @@ Uma requisição passa pelo controller, pelo service e pelo repository até cheg
 
 ## Banco de dados
 
-O H2 salva os dados em `./data/imobiliaria`, relativo à pasta de onde o comando de execução foi iniciado. Na primeira inicialização, o Flyway aplica `V1__create_tables.sql`, que cria as tabelas `clientes`, `imoveis` e `locacao` e as chaves estrangeiras da locação.
+O H2 salva os dados em `./data/imobiliaria`, relativo à pasta de onde o comando de execução foi iniciado. Na primeira inicialização, o Flyway aplica `V1__create_tables.sql`, que cria as tabelas `clientes`, `imoveis` e `locacao` e as chaves estrangeiras da locação. Em seguida, aplica `V2__inserir_dados_de_demonstracao.sql`, que adiciona os registros de exemplo descritos abaixo.
 
 O Hibernate está configurado com `ddl-auto=validate`: ele confere se as entidades correspondem às tabelas, mas não cria nem altera o banco. A estrutura é criada pelas migrações do Flyway. O console do H2 fica em <http://localhost:8080/h2-console>; conecte-se com estes dados:
 
@@ -88,6 +88,10 @@ O Hibernate está configurado com `ddl-auto=validate`: ele confere se as entidad
 | Senha | Deixe em branco |
 
 Os dados locais e os arquivos gerados pelo Maven não são enviados ao GitHub: `data/` e `target/` estão no `.gitignore`.
+
+### Dados de demonstração
+
+A migração V2 acrescenta 10 clientes, 10 imóveis e 10 locações fictícias, identificados pelo prefixo `DEMO`. Os exemplos cobrem locações ativas, encerradas e sem status informado, além de valores e campos opcionais preenchidos, zerados ou vazios. A migração não apaga os dados que já existirem no banco. Como o Flyway executa cada migração uma única vez por banco, esses registros entram automaticamente na primeira inicialização após a inclusão da V2.
 
 ## Entidades e regras
 

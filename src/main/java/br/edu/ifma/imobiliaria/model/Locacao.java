@@ -15,12 +15,12 @@ public class Locacao {
     private Long id;
 
     @NotNull(message = "Imóvel é obrigatório.")
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "id_imovel", nullable = false)
     private Imovel imovel;
 
     @NotNull(message = "Inquilino é obrigatório.")
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "id_inquilino", nullable = false)
     private Cliente inquilino;
 
